@@ -13,8 +13,8 @@ class Tutor:
         self.currentQuestion = question
         self.currentAnswer = answer
 
-    def addHistory(self, input, output):
-        pair = self.createPair(input, output)
+    def addHistory(self, userInput, modelOutput):
+        pair = self.createPair(userInput, modelOutput)
         self.chatHistory.append(pair)
     def createPair(self, input, output):
         #UserInput-ModelOutput pairs are stored as tuples
@@ -48,6 +48,9 @@ class TutorGemini(Tutor):
                 thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking budget
             ),
         )
+
+        self.addHistory(prompt, response.text)
+
         return response
 
 import openai
@@ -72,4 +75,5 @@ class TutorOpenAI(Tutor):
         ],
         max_output_tokens=1000,  # Set a limit on the number of output tokens
         )
+        self.addHistory(prompt, response.output_text)
         return response
