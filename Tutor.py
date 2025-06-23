@@ -84,9 +84,16 @@ class TutorGemini(Tutor):
         self.client = genai.Client(api_key=key)
 
     def respond(self, prompt):
+        if self.nSteps == 0:
+            # If this is the first step, use the initial prompt
+            contents = "Context: " + self.initPrompt + "\nUser Input: " + prompt
+        else:
+            # If this is not the first step, use the chat history
+            contents = "Context: " + self.createContext() + "\nUser Input: " + prompt
+        
         response = self.client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=prompt,
+            contents=contents,
             config=types.GenerateContentConfig(
                 thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking budget
             ),
