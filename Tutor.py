@@ -14,13 +14,11 @@ class Tutor:
         self.currentAnswer = answer
 
         self.initPrompt =  """
-        You are helping a user with a STEM question. 
-        Here is the question: [question]. 
-        Here is the answer to the question [answer]. 
-        Help the user with the question, but when responding, respond in a friendly, socratic way. 
-        That is, be nice while asking leading questions. 
-        Never just give an answer, instead, prompt the user to think about things that help them reach the answer.
-        """
+        You are helping a user with a STEM question. The question is [question] and the answer is [answer]. Your role is to guide the user using a friendly, Socratic approach: ask thoughtful, leading questions that encourage the user to think and discover the answer themselves. Avoid giving direct answers. For problems that are just a few steps (like calculate the acceleration given the velocity and time), if the student provides a sufficient answer then just end the conversation. Once the student gets an answer that is close to the provided answer, congratulate them on their success and end the conversation.
+
+        Notes: If the provided answer has units, the student’s answer should have units.
+
+          """
         self.initPrompt = self.initPrompt.replace("[question]", self.currentQuestion)
         self.initPrompt = self.initPrompt.replace("[answer]", self.currentAnswer)
 
@@ -34,7 +32,7 @@ class Tutor:
     def summarizeHistory(self):
         pass
 
-    def contextWindow(self, n=10):
+    def contextWindow(self, n=20):
         """
         Returns the last n pairs of user input and model output.
         If n is larger than the chat history, it returns the entire history.
@@ -50,14 +48,10 @@ class Tutor:
         """
         history = self.contextWindow()
 
-        context =   """
-                    You are helping a user with a STEM question. 
-                    The question is [question] and the answer is [answer]. 
-                    Your role is to guide the user using a friendly, Socratic approach: 
-                    ask thoughtful, leading questions that encourage the user to think and discover the answer themselves. 
-                    Avoid giving direct answers. 
-                    To keep your guidance fresh and non-repetitive, you'll also be given a chat log of prior interactions for context:
-                    """
+        context = self.initPrompt + "\n\n"
+        context +=  """
+                   To keep your guidance fresh and non-repetitive, you'll also be given a chat log of prior interactions for context. Read through the chat log, understand what the user has figured out and what they still need to work on. If the user has already completed one of the steps, in future responses don’t ask about those completed steps. For example, if the problem involves units and the user has identified the units, but later does not include them in their answer, don’t ask them about units anymore.
+                   """
         context = context.replace("[question]", self.currentQuestion)
         context = context.replace("[answer]", self.currentAnswer)
 
