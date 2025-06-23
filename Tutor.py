@@ -13,6 +13,17 @@ class Tutor:
         self.currentQuestion = question
         self.currentAnswer = answer
 
+        self.initPrompt =  """
+        You are helping a user with a STEM question. 
+        Here is the question: [question]. 
+        Here is the answer to the question [answer]. 
+        Help the user with the question, but when responding, respond in a friendly, socratic way. 
+        That is, be nice while asking leading questions. 
+        Never just give an answer, instead, prompt the user to think about things that help them reach the answer.
+        """
+        self.initPrompt = self.initPrompt.replace("[question]", self.currentQuestion)
+        self.initPrompt = self.initPrompt.replace("[answer]", self.currentAnswer)
+
     def addHistory(self, userInput, modelOutput):
         pair = self.createPair(userInput, modelOutput)
         self.chatHistory.append(pair)
@@ -22,6 +33,38 @@ class Tutor:
     
     def summarizeHistory(self):
         pass
+
+    def contextWindow(self, n=10):
+        """
+        Returns the last n pairs of user input and model output.
+        If n is larger than the chat history, it returns the entire history.
+        """
+        if n > len(n.Steps):
+            return self.chatHistory
+        else:
+            return self.chatHistory[-n:]
+    def createContext(self):
+        """
+        Creates a context string from the chat history.
+        The context is a concatenation of user inputs and model outputs.
+        """
+        history = self.contextWindow()
+
+        context =   """
+                    You are helping a user with a STEM question. 
+                    The question is [question] and the answer is [answer]. 
+                    Your role is to guide the user using a friendly, Socratic approach: 
+                    ask thoughtful, leading questions that encourage the user to think and discover the answer themselves. 
+                    Avoid giving direct answers. 
+                    To keep your guidance fresh and non-repetitive, you'll also be given a chat log of prior interactions for context:
+                    """
+        context = context.replace("[question]", self.currentQuestion)
+        context = context.replace("[answer]", self.currentAnswer)
+
+        # Append each user input and model output to the context
+        for userInput, modelOutput in history:
+            context += f"User: {userInput}\nModel: {modelOutput}\n"
+        return context.strip()
     
     def respond(self, prompt):
         """
