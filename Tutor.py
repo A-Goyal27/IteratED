@@ -7,7 +7,7 @@ class Tutor:
 
         # Initialize chat history
         self.chatHistory = []
-        self.nSteps = len(self.chatHistory)
+        self.nSteps = 0
         self.correctAnswers = []
 
         # Initialize current question and answer
@@ -87,8 +87,8 @@ class Tutor:
         else:
             # If this is not the first step, use the chat history
             contents = self.initPrompt
-            contents += "\nUser Input: " + prompt
             contents += "Here is a summary of the chat so far: " + self.summarizeHistory(self.chatHistory)
+            contents += "\nHere is what the User Inputted: " + prompt
             #contents = "Context: " + self.createContext() + "\nUser Input: " + prompt
         
         return contents
@@ -140,6 +140,7 @@ class TutorGemini(Tutor):
         )
 
         self.lastResponse = response.text
+        self.nSteps += 1
 
         return response
 
