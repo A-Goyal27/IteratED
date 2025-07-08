@@ -8,28 +8,36 @@ class Tutor:
         # Initialize chat history
         self.chatHistory = []
         self.nSteps = len(self.chatHistory)
+        self.correctAnswers = []
 
         # Initialize current question and answer
         self.currentQuestion = question
         self.currentAnswer = answer
 
-        self.initPrompt =  """
-        You are helping a user with a STEM question. The question is [question] and the answer is [answer]. Your role is to guide the user using a friendly, Socratic approach: ask thoughtful, leading questions that encourage the user to think and discover the answer themselves. Avoid giving direct answers. For problems that are just a few steps (like calculate the acceleration given the velocity and time), if the student provides a sufficient answer then just end the conversation. Once the student gets an answer that is close to the provided answer, congratulate them on their success and end the conversation.
+        #self.initPrompt =  """
+        #You are helping a user with a STEM question. The question is [question] and the answer is [answer]. Your role is to guide the user using a friendly, Socratic approach: ask thoughtful, leading questions that encourage the user to think and discover the answer themselves. Avoid giving direct answers. For problems that are just a few steps (like calculate the acceleration given the velocity and time), if the student provides a sufficient answer then just end the conversation. Once the student gets an answer that is close to the provided answer, congratulate them on their success and end the conversation.
 
-        Notes: If the provided answer has units, the student’s answer should have units.
+        #Notes: If the provided answer has units, the student’s answer should have units.
 
-          """
+          #"""
+        
+        self.initPrompt = self.openFile("IteratED_Github/Prompts/InitPrompt.txt")
+
         self.initPrompt = self.initPrompt.replace("[question]", self.currentQuestion)
         self.initPrompt = self.initPrompt.replace("[answer]", self.currentAnswer)
 
-    def addHistory(self, userInput, modelOutput):
-        pair = self.createPair(userInput, modelOutput)
-        self.chatHistory.append(pair)
-    def createPair(self, input, output):
-        #UserInput-ModelOutput pairs are stored as tuples
-        return (input, output)
+        self.lastResponse = "No initial model output yet"  # Placeholder for the first response
+   
+    def openFile(self, filename):
+        with open(filename, "r") as file:
+            contents = file.read()
+        return contents
     
-    def summarizeHistory(self):
+    def addHistory(self, modelOutput, userInput):
+        pair = (modelOutput, userInput) #ModelOutput-UserInput pairs are stored as tuples
+        self.chatHistory.append(pair)
+    
+    def summarizeHistory(self, chatHistory):
         pass
 
     def contextWindow(self, n=20):
@@ -37,10 +45,22 @@ class Tutor:
         Returns the last n pairs of user input and model output.
         If n is larger than the chat history, it returns the entire history.
         """
-        if n > len(n.Steps):
+        if n > self.nSteps:
             return self.chatHistory
         else:
             return self.chatHistory[-n:]
+        
+    def createChatLog(self):
+        """
+        Creates a chat log string from the chat history.
+        The chat log is a concatenation of user inputs and model outputs.
+        """
+        history = self.contextWindow()
+        chatLog = ""
+        for modelOutput, userInput in history:
+            chatLog += f"Model: {modelOutput}\nUser: {userInput}\n"
+        return chatLog.strip()
+    
     def createContext(self):
         """
         Creates a context string from the chat history.
@@ -49,16 +69,29 @@ class Tutor:
         history = self.contextWindow()
 
         context = self.initPrompt + "\n\n"
-        context +=  """
-                   To keep your guidance fresh and non-repetitive, you'll also be given a chat log of prior interactions for context. Read through the chat log, understand what the user has figured out and what they still need to work on. If the user has already completed one of the steps, in future responses don’t ask about those completed steps. For example, if the problem involves units and the user has identified the units, but later does not include them in their answer, don’t ask them about units anymore.
-                   """
+        with open("IteratED_Github/Prompts/chatLogPrompt.txt", "r") as file:
+            context += file.read()
+
         context = context.replace("[question]", self.currentQuestion)
         context = context.replace("[answer]", self.currentAnswer)
 
         # Append each user input and model output to the context
-        for userInput, modelOutput in history:
-            context += f"User: {userInput}\nModel: {modelOutput}\n"
+        for modelOutput, userInput in history:
+            context += f"Model: {modelOutput}\nUser: {userInput}\n"
         return context.strip()
+    
+    def createContents(self, prompt):
+        if self.nSteps == 0:
+            # If this is the first step, use the initial prompt
+            contents = "Context: " + self.initPrompt + "\nUser Input: " + prompt
+        else:
+            # If this is not the first step, use the chat history
+            contents = self.initPrompt
+            contents += "\nUser Input: " + prompt
+            contents += "Here is a summary of the chat so far: " + self.summarizeHistory(self.chatHistory)
+            #contents = "Context: " + self.createContext() + "\nUser Input: " + prompt
+        
+        return contents
     
     def respond(self, prompt):
         """
@@ -77,14 +110,27 @@ class TutorGemini(Tutor):
         #initialize Gemini client
         self.client = genai.Client(api_key=key)
 
+    def summarizeHistory(self, chatHistory):
+        contents = self.openFile("IteratED_Github/Prompts/summaryPrompt.txt")
+        contents = contents.replace("[question]", self.currentQuestion)
+        contents = contents.replace("[answer]", self.currentAnswer)
+
+        contents += "Chat Log: " + self.createChatLog()
+
+        response = self.client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking budget
+            )
+        )
+
+        return response.text
+
     def respond(self, prompt):
-        if self.nSteps == 0:
-            # If this is the first step, use the initial prompt
-            contents = "Context: " + self.initPrompt + "\nUser Input: " + prompt
-        else:
-            # If this is not the first step, use the chat history
-            contents = "Context: " + self.createContext() + "\nUser Input: " + prompt
-        
+        self.addHistory(self.lastResponse, prompt)
+        contents = self.createContents(prompt)
+
         response = self.client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
@@ -93,7 +139,7 @@ class TutorGemini(Tutor):
             ),
         )
 
-        self.addHistory(prompt, response.text)
+        self.lastResponse = response.text
 
         return response
 
