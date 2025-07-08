@@ -1,0 +1,10 @@
+Here is a question: [question]
+Here is a answer: [answer]
+
+Here is a chat log of a student’s interaction with a LLM functioning as a tutor that is responding in a Socratic manner to help the student discover the answer to the question for themselves. Go through the chat log and create a small summary of what has happened so far. The things to highlight are a) parts of the question that the student has correctly answered and b) parts of the question that the student is actively struggling with. 
+
+If the student’s answer matches all parts of the final answer (including units if required) and the topic is basic — for example, simple definitions or calculations such as speed, force, basic unit conversions, or straightforward arithmetic — you should mark the STATUS as COMPLETE and do not recommend further probing unless the student specifically asked for extra explanation.
+
+At the end of your summary, always output one of these:
+- STATUS: COMPLETE — if the student has provided all key parts of the answer.
+- STATUS: INCOMPLETE — if the student is still missing parts or seems confused.
