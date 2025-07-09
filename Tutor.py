@@ -39,7 +39,17 @@ class Tutor:
         self.chatHistory.append(pair)
     
     def summarizeHistory(self, chatHistory):
-        pass
+        contents = self.openFile("IteratED_Github/Prompts/summaryPrompt.txt")
+        contents = contents.replace("[question]", self.currentQuestion)
+        contents = contents.replace("[answer]", self.currentAnswer)
+
+        contents += "Chat Log: " + self.createChatLog(2)
+        contents += "Synopsis: " + self.lastSummary
+
+        response = self.generateResponse(contents)
+        
+        self.lastSummary = response.text  # Store the last summary
+        return response.text
 
     def contextWindow(self, n=20):
         """
@@ -62,25 +72,6 @@ class Tutor:
             chatLog += f"Model: {modelOutput}\nUser: {userInput}\n"
         return chatLog.strip()
     
-    def createContext(self):
-        """
-        Creates a context string from the chat history.
-        The context is a concatenation of user inputs and model outputs.
-        """
-        history = self.contextWindow()
-
-        context = self.initPrompt + "\n\n"
-        with open("IteratED_Github/Prompts/chatLogPrompt.txt", "r") as file:
-            context += file.read()
-
-        context = context.replace("[question]", self.currentQuestion)
-        context = context.replace("[answer]", self.currentAnswer)
-
-        # Append each user input and model output to the context
-        for modelOutput, userInput in history:
-            context += f"Model: {modelOutput}\nUser: {userInput}\n"
-        return context.strip()
-    
     def createContents(self, prompt):
         if self.nSteps == 0:
             # If this is the first step, use the initial prompt
@@ -90,17 +81,19 @@ class Tutor:
             contents = self.initPrompt
             contents += "Here is a summary of the chat so far: " + self.summarizeHistory(self.chatHistory)
             contents += "\nHere is what the User Inputted: " + prompt
-            #contents = "Context: " + self.createContext() + "\nUser Input: " + prompt
         
         return contents
     
-    def respond(self, prompt):
-        """
-        #pseudocode
-        response = client.respond(prompt)
+    def chat(self, prompt):
+        self.addHistory(self.lastResponse, prompt)
+        contents = self.createContents(prompt)
+
+        response = self.generateResponse(contents)
+
+        self.lastResponse = response.text
+        self.nSteps += 1
+
         return response
-        """
-        pass  # This method should be overridden by subclasses
 
 from google import genai
 from google.genai import types    
@@ -110,32 +103,8 @@ class TutorGemini(Tutor):
 
         #initialize Gemini client
         self.client = genai.Client(api_key=key)
-
-    def summarizeHistory(self, chatHistory):
-        contents = self.openFile("IteratED_Github/Prompts/summaryPrompt.txt")
-        contents = contents.replace("[question]", self.currentQuestion)
-        contents = contents.replace("[answer]", self.currentAnswer)
-
-        contents += "Chat Log: " + self.createChatLog(2)
-        contents += "Synopsis: " + self.lastSummary
-
-        response = self.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking budget
-            )
-        )
-
-        print("Summary of chat history:" + response.text) #debugging line
-        
-        self.lastSummary = response.text  # Store the last summary
-        return response.text
-
-    def respond(self, prompt):
-        self.addHistory(self.lastResponse, prompt)
-        contents = self.createContents(prompt)
-
+    
+    def generateResponse(self, contents):
         response = self.client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
@@ -143,10 +112,6 @@ class TutorGemini(Tutor):
                 thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking budget
             ),
         )
-
-        self.lastResponse = response.text
-        self.nSteps += 1
-
         return response
 
 import openai
@@ -159,17 +124,17 @@ class TutorOpenAI(Tutor):
         openai.api_key = key
         self.client = openai.Client()
 
-    def respond(self, prompt):
+    def generateResponse(self, contents):
         response = self.client.responses.create(
         model="o4-mini",
         reasoning={"effort": "medium"},
         input=[
         {
             "role": "user", 
-            "content": prompt
+            "content": contents
         }
         ],
         max_output_tokens=1000,  # Set a limit on the number of output tokens
         )
-        self.addHistory(prompt, response.output_text)
+        
         return response
