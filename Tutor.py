@@ -27,6 +27,7 @@ class Tutor:
         self.initPrompt = self.initPrompt.replace("[answer]", self.currentAnswer)
 
         self.lastResponse = "No initial model output yet"  # Placeholder for the first response
+        self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
    
     def openFile(self, filename):
         with open(filename, "r") as file:
@@ -50,12 +51,12 @@ class Tutor:
         else:
             return self.chatHistory[-n:]
         
-    def createChatLog(self):
+    def createChatLog(self, n=20):
         """
         Creates a chat log string from the chat history.
         The chat log is a concatenation of user inputs and model outputs.
         """
-        history = self.contextWindow()
+        history = self.contextWindow(n)
         chatLog = ""
         for modelOutput, userInput in history:
             chatLog += f"Model: {modelOutput}\nUser: {userInput}\n"
@@ -115,7 +116,8 @@ class TutorGemini(Tutor):
         contents = contents.replace("[question]", self.currentQuestion)
         contents = contents.replace("[answer]", self.currentAnswer)
 
-        contents += "Chat Log: " + self.createChatLog()
+        contents += "Chat Log: " + self.createChatLog(2)
+        contents += "Synopsis: " + self.lastSummary
 
         response = self.client.models.generate_content(
             model="gemini-2.5-flash",
@@ -125,6 +127,9 @@ class TutorGemini(Tutor):
             )
         )
 
+        print("Summary of chat history:" + response.text) #debugging line
+        
+        self.lastSummary = response.text  # Store the last summary
         return response.text
 
     def respond(self, prompt):
