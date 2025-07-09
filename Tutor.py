@@ -13,13 +13,6 @@ class Tutor:
         # Initialize current question and answer
         self.currentQuestion = question
         self.currentAnswer = answer
-
-        #self.initPrompt =  """
-        #You are helping a user with a STEM question. The question is [question] and the answer is [answer]. Your role is to guide the user using a friendly, Socratic approach: ask thoughtful, leading questions that encourage the user to think and discover the answer themselves. Avoid giving direct answers. For problems that are just a few steps (like calculate the acceleration given the velocity and time), if the student provides a sufficient answer then just end the conversation. Once the student gets an answer that is close to the provided answer, congratulate them on their success and end the conversation.
-
-        #Notes: If the provided answer has units, the student’s answer should have units.
-
-          #"""
         
         self.initPrompt = self.openFile("IteratED_Github/Prompts/InitPrompt.txt")
 
@@ -28,7 +21,10 @@ class Tutor:
 
         self.lastResponse = "No initial model output yet"  # Placeholder for the first response
         self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
-   
+    
+    def generateResponse(self, contents):
+        pass # This method will be implemented in subclasses
+
     def openFile(self, filename):
         with open(filename, "r") as file:
             contents = file.read()
