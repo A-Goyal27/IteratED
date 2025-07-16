@@ -1,8 +1,5 @@
-import numpy as np
-#test push 2.5
-
 class Tutor:
-    def __init__(self, question=None, answer=None): #there will be a new tutor for each question
+    def __init__(self, question="", answer=""): #there will be a new tutor for each question
         #the subclasses will have specific models
 
         # Initialize chat history
@@ -21,7 +18,7 @@ class Tutor:
 
         self.lastResponse = "No initial model output yet"  # Placeholder for the first response
         self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
-        self.responseObject = None
+        self.responseObject = ""
     
     def generateResponse(self, contents):
         pass #Each specific model has their own response generation method, so this will be overridden
@@ -41,7 +38,7 @@ class Tutor:
         contents = contents.replace("[answer]", self.currentAnswer)
 
         contents += "Chat Log: " + self.createChatLog(2) #the number here is how many pairs to include, it can be changed later but less means less token usage
-        contents += "Synopsis: " + self.lastSummary
+        contents += "Synopsis: " + (self.lastSummary or "")
 
         response = self.generateResponse(contents)
         
@@ -76,7 +73,7 @@ class Tutor:
         else:
             # If this is not the first step, use the chat history
             contents = self.initPrompt
-            contents += "Here is a summary of the chat so far: " + self.summarizeHistory(self.chatHistory)
+            contents += "Here is a summary of the chat so far: " + (self.summarizeHistory(self.chatHistory) or "")
             contents += "\nHere is what the User Inputted: " + prompt
         
         return contents
@@ -95,7 +92,7 @@ class Tutor:
 from google import genai
 from google.genai import types    
 class TutorGemini(Tutor):
-    def __init__(self, key, question=None, answer=None):
+    def __init__(self, key, question="", answer=""):
         super().__init__(question, answer)
 
         #initialize Gemini client
@@ -116,7 +113,7 @@ class TutorGemini(Tutor):
 import openai
 from openai import OpenAI   
 class TutorOpenAI(Tutor):
-    def __init__(self, key, question=None, answer=None):
+    def __init__(self, key, question="", answer=""):
         super().__init__(question, answer)
         
         # Initialize OpenAI client
