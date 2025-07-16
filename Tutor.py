@@ -21,9 +21,10 @@ class Tutor:
 
         self.lastResponse = "No initial model output yet"  # Placeholder for the first response
         self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
+        self.responseObject = None
     
     def generateResponse(self, contents):
-        pass # This method will be implemented in subclasses
+        pass #Each specific model has their own response generation method, so this will be overridden
 
     def openFile(self, filename):
         with open(filename, "r") as file:
@@ -39,13 +40,13 @@ class Tutor:
         contents = contents.replace("[question]", self.currentQuestion)
         contents = contents.replace("[answer]", self.currentAnswer)
 
-        contents += "Chat Log: " + self.createChatLog(2)
+        contents += "Chat Log: " + self.createChatLog(2) #the number here is how many pairs to include, it can be changed later but less means less token usage
         contents += "Synopsis: " + self.lastSummary
 
         response = self.generateResponse(contents)
         
-        self.lastSummary = response.text  # Store the last summary
-        return response.text
+        self.lastSummary = response  # Store the last summary
+        return response
 
     def contextWindow(self, n=20):
         """
@@ -86,7 +87,7 @@ class Tutor:
 
         response = self.generateResponse(contents)
 
-        self.lastResponse = response.text
+        self.lastResponse = response
         self.nSteps += 1
 
         return response
@@ -108,7 +109,9 @@ class TutorGemini(Tutor):
                 thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking budget
             ),
         )
-        return response
+
+        self.responseObject = response
+        return response.text
 
 import openai
 from openai import OpenAI   
@@ -132,5 +135,6 @@ class TutorOpenAI(Tutor):
         ],
         max_output_tokens=1000,  # Set a limit on the number of output tokens
         )
-        
-        return response
+
+        self.responseObject = response
+        return response.output_text
