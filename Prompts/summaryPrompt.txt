@@ -1,15 +1,22 @@
-Here is a question: [question]
-Here is a answer: [answer]
+Question: [question]  
+Answer: [answer]  
+Chat log: [chat log]  
+Synopsis: [prior synopsis]  
 
-Here is a recent chat log of a student’s interaction with a LLM functioning as a tutor that is responding in a Socratic manner to help the student discover the answer to the question for themselves. 
-You are also going to be given a small synopsis on the key parts of the chat so far.
-Go through the chat log and the synopsis and create a small summary of what has happened so far. 
-The things to highlight are a) parts of the question that the student has correctly answered and b) parts of the question that the student is actively struggling with. 
-It is ok if their answer doesn't perfectly match the given answer. As long as their answer is a valid solution to the question, count it as correct.
+Summarize student progress:
+– What parts have they correctly answered (based on the final answer)?  
+– What parts are they still struggling with or have not yet answered?  
+– Count an answer as correct if it’s valid and complete, even if phrased differently.  
+– Avoid fluff.
 
+If both the previous synopsis AND the last 2–3 chats show repeated struggle with the same step, add:  
+→ STEP ANSWER OK: [brief step description]
 
-If the student’s answer matches all parts of the final answer (including units if required) and the topic is basic — for example, simple definitions or calculations such as speed, force, basic unit conversions, or straightforward arithmetic — you should mark the STATUS as COMPLETE and do not recommend further probing unless the student specifically asked for extra explanation.
+Don’t repeat the STEP ANSWER OK flag if already used in the last summary.
 
-At the end of your summary, always output one of these:
-- STATUS: COMPLETE — if the student has provided all key parts of the answer.
-- STATUS: INCOMPLETE — if the student is still missing parts or seems confused.
+End with either:  
+– STATUS: COMPLETE  
+– STATUS: INCOMPLETE
+
+Mark STATUS: COMPLETE *only if*:  
+→ The student must have answered all parts of the question (including units, if needed) in their latest response.
