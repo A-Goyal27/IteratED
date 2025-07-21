@@ -18,7 +18,7 @@ class Tutor:
 
         self.lastResponse = "No initial model output yet"  # Placeholder for the first response
         self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
-        self.responseObject = ""
+        self.responseObject = None
 
         #verification mode
         self.verificationMode = verificationMode
@@ -95,6 +95,7 @@ class Tutor:
         if self.verificationMode:
             response = self.generateResponse(self.verificationPrompt + "\n" + prompt)
             self.lastResponse = response
+            return response
         self.addHistory(self.lastResponse, prompt)
         contents = self.createContents(prompt)
 
