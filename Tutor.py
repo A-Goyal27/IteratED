@@ -3,106 +3,105 @@ class Tutor:
         #the subclasses will have specific models
 
         # Initialize chat history
-        self.chatHistory = []
-        self.nSteps = 0
-        self.correctAnswers = []
+        self._chatHistory = []
+        self._nSteps = 0
+        
+        self._lastResponse = "No initial model output yet"  # Placeholder for the first response
+        self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
+        self._responseObject = None
 
         # Initialize current question and answer
         self.currentQuestion = question
         self.currentAnswer = answer
         
-        self.initPrompt = self.openFile("IteratED_Github/Prompts/InitPrompt.txt")
+        self._initPrompt = self._openFile("IteratED_Github/Prompts/InitPrompt.txt")
 
-        self.initPrompt = self.initPrompt.replace("[question]", self.currentQuestion)
-        self.initPrompt = self.initPrompt.replace("[answer]", self.currentAnswer)
-
-        self.lastResponse = "No initial model output yet"  # Placeholder for the first response
-        self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
-        self.responseObject = None
+        self._initPrompt = self._initPrompt.replace("[question]", self.currentQuestion)
+        self._initPrompt = self._initPrompt.replace("[answer]", self.currentAnswer)
 
         #verification mode
-        self.verificationMode = verificationMode
-        self.verificationPrompt = self.openFile("IteratED_Github/Prompts/verificationModePrompt.txt")
-        self.verificationPrompt = self.verificationPrompt.replace("[question]", self.currentQuestion)
-        self.verificationPrompt = self.verificationPrompt.replace("[answer]", self.currentAnswer)
+        self._verificationMode = verificationMode
+        self._verificationPrompt = self._openFile("IteratED_Github/Prompts/verificationModePrompt.txt")
+        self._verificationPrompt = self._verificationPrompt.replace("[question]", self.currentQuestion)
+        self._verificationPrompt = self._verificationPrompt.replace("[answer]", self.currentAnswer)
     
-    def generateResponse(self, contents):
+    def _generateResponse(self, contents):
         pass #Each specific model has their own response generation method, so this will be overridden
 
     def turnVerificationModeOn(self):
-        self.verificationMode = True
+        self._verificationMode = True
         return
     def turnVerificationModeOff(self):
-        self.verificationMode = False
+        self._verificationMode = False
         return
 
-    def openFile(self, filename):
+    def _openFile(self, filename):
         with open(filename, "r") as file:
             contents = file.read()
         return contents
     
-    def addHistory(self, modelOutput, userInput):
+    def _addHistory(self, modelOutput, userInput):
         pair = (modelOutput, userInput) #ModelOutput-UserInput pairs are stored as tuples
-        self.chatHistory.append(pair)
+        self._chatHistory.append(pair)
     
-    def summarizeHistory(self, chatHistory):
-        contents = self.openFile("IteratED_Github/Prompts/summaryPrompt.txt")
+    def _summarizeHistory(self, chatHistory):
+        contents = self._openFile("IteratED_Github/Prompts/summaryPrompt.txt")
         contents = contents.replace("[question]", self.currentQuestion)
         contents = contents.replace("[answer]", self.currentAnswer)
 
-        contents += "Chat Log: " + self.createChatLog(2) #the number here is how many pairs to include, it can be changed later but less means less token usage
+        contents += "Chat Log: " + self._createChatLog(2) #the number here is how many pairs to include, it can be changed later but less means less token usage
         contents += "Synopsis: " + (self.lastSummary or "")
 
-        response = self.generateResponse(contents)
+        response = self._generateResponse(contents)
         
         self.lastSummary = response  # Store the last summary
         return response
 
-    def contextWindow(self, n=20):
+    def _contextWindow(self, n=20):
         """
         Returns the last n pairs of user input and model output.
         If n is larger than the chat history, it returns the entire history.
         """
-        if n > self.nSteps:
-            return self.chatHistory
+        if n > self._nSteps:
+            return self._chatHistory
         else:
-            return self.chatHistory[-n:]
+            return self._chatHistory[-n:]
         
-    def createChatLog(self, n=20):
+    def _createChatLog(self, n=20):
         """
         Creates a chat log string from the chat history.
         The chat log is a concatenation of user inputs and model outputs.
         """
-        history = self.contextWindow(n)
+        history = self._contextWindow(n)
         chatLog = ""
         for modelOutput, userInput in history:
             chatLog += f"Model: {modelOutput}\nUser: {userInput}\n"
         return chatLog.strip()
     
-    def createContents(self, prompt):
-        if self.nSteps == 0:
+    def _createContents(self, prompt):
+        if self._nSteps == 0:
             # If this is the first step, use the initial prompt
-            contents = "Context: " + self.initPrompt + "\nUser Input: " + prompt
+            contents = "Context: " + self._initPrompt + "\nUser Input: " + prompt
         else:
             # If this is not the first step, use the chat history
-            contents = self.initPrompt
-            contents += "Here is a summary of the chat so far: " + (self.summarizeHistory(self.chatHistory) or "")
+            contents = self._initPrompt
+            contents += "Here is a summary of the chat so far: " + (self._summarizeHistory(self._chatHistory) or "")
             contents += "\nHere is what the User Inputted: " + prompt
         
         return contents
     
     def chat(self, prompt):
-        if self.verificationMode:
-            response = self.generateResponse(self.verificationPrompt + "\n" + prompt)
-            self.lastResponse = response
+        if self._verificationMode:
+            response = self._generateResponse(self._verificationPrompt + "\n" + prompt)
+            self._lastResponse = response
             return response
-        self.addHistory(self.lastResponse, prompt)
-        contents = self.createContents(prompt)
+        self._addHistory(self._lastResponse, prompt)
+        contents = self._createContents(prompt)
 
-        response = self.generateResponse(contents)
+        response = self._generateResponse(contents)
 
-        self.lastResponse = response
-        self.nSteps += 1
+        self._lastResponse = response
+        self._nSteps += 1
 
         return response
 
@@ -113,10 +112,10 @@ class TutorGemini(Tutor):
         super().__init__(question, answer)
 
         #initialize Gemini client
-        self.client = genai.Client(api_key=key)
+        self._client = genai.Client(api_key=key)
     
-    def generateResponse(self, contents):
-        response = self.client.models.generate_content(
+    def _generateResponse(self, contents):
+        response = self._client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
             config=types.GenerateContentConfig(
@@ -124,7 +123,7 @@ class TutorGemini(Tutor):
             ),
         )
 
-        self.responseObject = response
+        self._responseObject = response
         return response.text
 
 import openai
@@ -135,10 +134,10 @@ class TutorOpenAI(Tutor):
         
         # Initialize OpenAI client
         openai.api_key = key
-        self.client = openai.Client()
+        self._client = openai.Client()
 
-    def generateResponse(self, contents):
-        response = self.client.responses.create(
+    def _generateResponse(self, contents):
+        response = self._client.responses.create(
         model="o4-mini",
         reasoning={"effort": "medium"},
         input=[
@@ -150,5 +149,5 @@ class TutorOpenAI(Tutor):
         max_output_tokens=1000,  # Set a limit on the number of output tokens
         )
 
-        self.responseObject = response
+        self._responseObject = response
         return response.output_text
