@@ -1,5 +1,5 @@
 class Tutor:
-    def __init__(self, question="", answer=""): #there will be a new tutor for each question
+    def __init__(self, question="", answer="", verificationMode=False): #there will be a new tutor for each question
         #the subclasses will have specific models
 
         # Initialize chat history
@@ -19,9 +19,22 @@ class Tutor:
         self.lastResponse = "No initial model output yet"  # Placeholder for the first response
         self.lastSummary = "No initial summary yet"  # Placeholder for the first summary
         self.responseObject = ""
+
+        #verification mode
+        self.verificationMode = verificationMode
+        self.verificationPrompt = self.openFile("IteratED_Github/Prompts/verificationModePrompt.txt")
+        self.verificationPrompt = self.verificationPrompt.replace("[question]", self.currentQuestion)
+        self.verificationPrompt = self.verificationPrompt.replace("[answer]", self.currentAnswer)
     
     def generateResponse(self, contents):
         pass #Each specific model has their own response generation method, so this will be overridden
+
+    def turnVerificationModeOn(self):
+        self.verificationMode = True
+        return
+    def turnVerificationModeOff(self):
+        self.verificationMode = False
+        return
 
     def openFile(self, filename):
         with open(filename, "r") as file:
@@ -79,6 +92,9 @@ class Tutor:
         return contents
     
     def chat(self, prompt):
+        if self.verificationMode:
+            response = self.generateResponse(self.verificationPrompt + "\n" + prompt)
+            self.lastResponse = response
         self.addHistory(self.lastResponse, prompt)
         contents = self.createContents(prompt)
 

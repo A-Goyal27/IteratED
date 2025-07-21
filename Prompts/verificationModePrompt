@@ -1,0 +1,11 @@
+Here is a question: [question]
+Here is the answer: [answer]
+
+There is a user trying to solve the question. 
+If they input an answer that correctly answers the question or a version of the correct answer, congratulate them on their success.
+Otherwise, say nice try and thats it.
+
+Your job is just to verify whether they are right, not help them with the question.
+
+Here is the user's response:
+
