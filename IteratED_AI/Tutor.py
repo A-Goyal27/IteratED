@@ -15,14 +15,14 @@ class Tutor:
         self.currentQuestion = question
         self.currentAnswer = answer
         
-        self._initPrompt = self._openFile("IteratED_Github/Prompts/InitPrompt.txt")
+        self._initPrompt = self._openFile("IteratED_Github/IteratED_AI/Prompts/InitPrompt.txt")
 
         self._initPrompt = self._initPrompt.replace("[question]", self.currentQuestion)
         self._initPrompt = self._initPrompt.replace("[answer]", self.currentAnswer)
 
         #verification mode
         self._verificationMode = verificationMode
-        self._verificationPrompt = self._openFile("IteratED_Github/Prompts/verificationModePrompt.txt")
+        self._verificationPrompt = self._openFile("IteratED_Github/IteratED_AI/Prompts/verificationModePrompt.txt")
         self._verificationPrompt = self._verificationPrompt.replace("[question]", self.currentQuestion)
         self._verificationPrompt = self._verificationPrompt.replace("[answer]", self.currentAnswer)
 
@@ -48,7 +48,7 @@ class Tutor:
         self._chatHistory.append(pair)
     
     def _summarizeHistory(self, chatHistory):
-        contents = self._openFile("IteratED_Github/Prompts/summaryPrompt.txt")
+        contents = self._openFile("IteratED_Github/IteratED_AI/Prompts/summaryPrompt.txt")
         contents = contents.replace("[question]", self.currentQuestion)
         contents = contents.replace("[answer]", self.currentAnswer)
 
