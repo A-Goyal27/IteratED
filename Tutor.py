@@ -1,5 +1,5 @@
 class Tutor:
-    def __init__(self, question="", answer="", verificationMode=False): #there will be a new tutor for each question
+    def __init__(self, question="", answer="", verificationMode=False, logLength=2): #there will be a new tutor for each question
         #the subclasses will have specific models
 
         # Initialize chat history
@@ -24,6 +24,8 @@ class Tutor:
         self._verificationPrompt = self._openFile("IteratED_Github/Prompts/verificationModePrompt.txt")
         self._verificationPrompt = self._verificationPrompt.replace("[question]", self.currentQuestion)
         self._verificationPrompt = self._verificationPrompt.replace("[answer]", self.currentAnswer)
+
+        self.logLength = logLength #should be made longer for more complex problems
     
     def _generateResponse(self, contents):
         pass #Each specific model has their own response generation method, so this will be overridden
@@ -49,7 +51,7 @@ class Tutor:
         contents = contents.replace("[question]", self.currentQuestion)
         contents = contents.replace("[answer]", self.currentAnswer)
 
-        contents += "Chat Log: " + self._createChatLog(2) #the number here is how many pairs to include, it can be changed later but less means less token usage
+        contents += "Chat Log: " + self._createChatLog(self.logLength) #the number here is how many pairs to include, it can be changed later but less means less token usage
         contents += "Synopsis: " + (self.lastSummary or "")
 
         response = self._generateResponse(contents)
@@ -57,7 +59,7 @@ class Tutor:
         self.lastSummary = response  # Store the last summary
         return response
 
-    def _contextWindow(self, n=20):
+    def _contextWindow(self, n=2):
         """
         Returns the last n pairs of user input and model output.
         If n is larger than the chat history, it returns the entire history.
@@ -67,7 +69,7 @@ class Tutor:
         else:
             return self._chatHistory[-n:]
         
-    def _createChatLog(self, n=20):
+    def _createChatLog(self, n=2):
         """
         Creates a chat log string from the chat history.
         The chat log is a concatenation of user inputs and model outputs.
