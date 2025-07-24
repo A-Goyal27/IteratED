@@ -15,16 +15,14 @@ class Tutor:
         self.currentQuestion = question
         self.currentAnswer = answer
         
-        self._initPrompt = self._openFile("IteratED_Github/IteratED_AI/Prompts/InitPrompt.txt")
-
-        self._initPrompt = self._initPrompt.replace("[question]", self.currentQuestion)
-        self._initPrompt = self._initPrompt.replace("[answer]", self.currentAnswer)
+        self._initPrompt = self._loadPrompt("IteratED_Github/IteratED_AI/Prompts/InitPrompt.txt")
+        #self._initPrompt = self._openFile("IteratED_Github/IteratED_AI/Prompts/InitPrompt.txt")
+        #self._initPrompt = self._initPrompt.replace("[question]", self.currentQuestion)
+        #self._initPrompt = self._initPrompt.replace("[answer]", self.currentAnswer)
 
         #verification mode
         self._verificationMode = verificationMode
-        self._verificationPrompt = self._openFile("IteratED_Github/IteratED_AI/Prompts/verificationModePrompt.txt")
-        self._verificationPrompt = self._verificationPrompt.replace("[question]", self.currentQuestion)
-        self._verificationPrompt = self._verificationPrompt.replace("[answer]", self.currentAnswer)
+        self._verificationPrompt = self._loadPrompt("IteratED_Github/IteratED_AI/Prompts/verificationModePrompt.txt")
 
         self.logLength = logLength #should be made longer for more complex problems
     
@@ -42,15 +40,19 @@ class Tutor:
         with open(filename, "r") as file:
             contents = file.read()
         return contents
+
+    def _loadPrompt(self, filename): #I am doing this open file, replace QnA routine a lot, so this makes it easier
+        prompt = self._openFile(filename)
+        prompt = prompt.replace("[question]", self.currentQuestion)
+        prompt = prompt.replace("[answer]", self.currentAnswer)
+        return prompt
     
     def _addHistory(self, modelOutput, userInput):
         pair = (modelOutput, userInput) #ModelOutput-UserInput pairs are stored as tuples
         self._chatHistory.append(pair)
     
     def _summarizeHistory(self, chatHistory):
-        contents = self._openFile("IteratED_Github/IteratED_AI/Prompts/summaryPrompt.txt")
-        contents = contents.replace("[question]", self.currentQuestion)
-        contents = contents.replace("[answer]", self.currentAnswer)
+        contents = self._loadPrompt("IteratED_Github/IteratED_AI/Prompts/summaryPrompt.txt")
 
         contents += "Chat Log: " + self._createChatLog(self.logLength) #the number here is how many pairs to include, it can be changed later but less means less token usage
         contents += "Synopsis: " + (self.lastSummary or "")
