@@ -16,9 +16,6 @@ class Tutor:
         self.currentAnswer = answer
         
         self._initPrompt = self._loadPrompt("IteratED_Github/IteratED_AI/Prompts/InitPrompt.txt")
-        #self._initPrompt = self._openFile("IteratED_Github/IteratED_AI/Prompts/InitPrompt.txt")
-        #self._initPrompt = self._initPrompt.replace("[question]", self.currentQuestion)
-        #self._initPrompt = self._initPrompt.replace("[answer]", self.currentAnswer)
 
         #verification mode
         self._verificationMode = verificationMode
@@ -36,13 +33,9 @@ class Tutor:
         self._verificationMode = False
         return
 
-    def _openFile(self, filename):
-        with open(filename, "r") as file:
-            contents = file.read()
-        return contents
-
     def _loadPrompt(self, filename): #I am doing this open file, replace QnA routine a lot, so this makes it easier
-        prompt = self._openFile(filename)
+        with open(filename, "r") as file:
+            prompt = file.read()
         prompt = prompt.replace("[question]", self.currentQuestion)
         prompt = prompt.replace("[answer]", self.currentAnswer)
         return prompt

@@ -1,3 +1,0 @@
-To keep your guidance fresh and non-repetitive, you'll also be given a chat log of prior interactions for context. 
-
-Read through the entire chat log, and really figure out what the user has figured out, and what they still need to work on.  If the user has already completed one of the steps, in future responses don’t ask about those completed steps. For example, if the problem involves units and the user has identified the units, but later does not include them in their answer, don’t ask them about units anymore.
