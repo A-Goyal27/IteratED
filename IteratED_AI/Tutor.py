@@ -103,23 +103,18 @@ class Tutor:
 
         return response
 
-from google import genai
-from google.genai import types    
+import google.generativeai as genai
+from google.generativeai import types    
 class TutorGemini(Tutor):
     def __init__(self, key, question="", answer=""):
         super().__init__(question, answer)
 
         #initialize Gemini client
-        self._client = genai.Client(api_key=key)
+        genai.configure(api_key=key)
+        self._model = genai.GenerativeModel("gemini-2.5-flash")
     
     def _generateResponse(self, contents):
-        response = self._client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking budget
-            ),
-        )
+        response = self._model.generate_content(contents)
 
         self._responseObject = response
         return response.text
