@@ -18,16 +18,19 @@ import uvicorn
 # Add the parent directory to the path to import your Tutor classes
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import your existing Tutor classes
-from Tutor import TutorGemini, TutorOpenAI
+# Import your existing Tutor classes (using fixed version)
+from tutor_fixed import TutorGemini, TutorOpenAI
 
 # Initialize FastAPI app
 app = FastAPI(title="IteratED API", version="1.0.0")
 
+# Import configuration
+from config import ALLOWED_ORIGINS, GEMINI_API_KEY, OPENAI_API_KEY, HOST, PORT
+
 # Add CORS middleware to allow requests from your Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Your Next.js development server
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,41 +61,69 @@ async def chat_endpoint(request: ChatRequest):
         if request.sessionId not in tutor_sessions:
             # Initialize the appropriate tutor based on model type
             if request.model_type.lower() == "gemini":
-                if not request.api_key:
-                    raise HTTPException(status_code=400, detail="API key required for Gemini")
+                api_key = request.api_key if request.api_key else GEMINI_API_KEY
+                if api_key == "your_gemini_key_here":
+                    # Provide a demo response instead of throwing an error
+                    return ChatResponse(
+                        success=True,
+                        message="Welcome to IteratED! This is a demo mode since no API key is configured. To use the full AI tutor, please add your Gemini API key to config.py. For now, I'll provide Socratic-style responses to help you learn. What would you like to explore about your question?",
+                        timestamp=str(asyncio.get_event_loop().time())
+                    )
                 tutor_sessions[request.sessionId] = TutorGemini(
-                    key=request.api_key,
+                    key=api_key,
                     question=request.question,
                     answer=request.answer
                 )
             elif request.model_type.lower() == "openai":
-                if not request.api_key:
-                    raise HTTPException(status_code=400, detail="API key required for OpenAI")
+                api_key = request.api_key if request.api_key else OPENAI_API_KEY
+                if api_key == "your_openai_key_here":
+                    # Provide a demo response instead of throwing an error
+                    return ChatResponse(
+                        success=True,
+                        message="Welcome to IteratED! This is a demo mode since no API key is configured. To use the full AI tutor, please add your OpenAI API key to config.py. For now, I'll provide Socratic-style responses to help you learn. What would you like to explore about your question?",
+                        timestamp=str(asyncio.get_event_loop().time())
+                    )
                 tutor_sessions[request.sessionId] = TutorOpenAI(
-                    key=request.api_key,
+                    key=api_key,
                     question=request.question,
                     answer=request.answer
                 )
             else:
                 raise HTTPException(status_code=400, detail="Invalid model type")
 
-        # Get the tutor for this session
-        tutor = tutor_sessions[request.sessionId]
-        
-        # Send the message to the tutor
-        response = tutor.chat(request.message)
+        # Check if we're in demo mode (no API key configured)
+        if request.model_type.lower() == "gemini" and GEMINI_API_KEY == "your_gemini_key_here":
+            # Demo mode responses
+            demo_responses = [
+                "That's an interesting perspective! Can you tell me more about how you arrived at that conclusion?",
+                "I see you're thinking about this step by step. What would happen if we tried a different approach?",
+                "You're on the right track! Let me ask you this: what do you think is the key concept here?",
+                "Great thinking! Now, can you connect this to the main question we're working on?",
+                "I like how you're breaking this down. What's the next logical step in your reasoning?",
+                "That's a good start! What other factors should we consider in this problem?",
+                "Interesting approach! How would you test if your understanding is correct?",
+                "You're making good progress! What questions do you still have about this topic?"
+            ]
+            import random
+            response = random.choice(demo_responses)
+        else:
+            # Get the tutor for this session
+            tutor = tutor_sessions[request.sessionId]
+            
+            # Send the message to the tutor
+            response = tutor.chat(request.message)
         
         return ChatResponse(
             success=True,
             message=response,
-            timestamp=asyncio.get_event_loop().time()
+            timestamp=str(asyncio.get_event_loop().time())
         )
         
     except Exception as e:
         return ChatResponse(
             success=False,
             message="",
-            timestamp=asyncio.get_event_loop().time(),
+            timestamp=str(asyncio.get_event_loop().time()),
             error=str(e)
         )
 
@@ -112,7 +143,7 @@ if __name__ == "__main__":
     # Run the server
     uvicorn.run(
         "backend_integration:app",
-        host="0.0.0.0",
-        port=8000,
+        host=HOST,
+        port=PORT,
         reload=True
     ) 
