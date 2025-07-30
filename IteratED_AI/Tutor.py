@@ -1,4 +1,5 @@
-#testpush
+from pathlib import Path
+
 class Tutor:
     def __init__(self, question="", answer="", verificationMode=False, logLength=2): #there will be a new tutor for each question
         #the subclasses will have specific models
@@ -15,13 +16,14 @@ class Tutor:
         self.currentQuestion = question
         self.currentAnswer = answer
         
-        self._initPrompt = self._loadPrompt("IteratED_Github/IteratED_AI/Prompts/InitPrompt.txt")
+        self._initPrompt = self._loadPrompt("InitPrompt.txt")
 
         #verification mode
         self._verificationMode = verificationMode
-        self._verificationPrompt = self._loadPrompt("IteratED_Github/IteratED_AI/Prompts/verificationModePrompt.txt")
+        self._verificationPrompt = self._loadPrompt("verificationModePrompt.txt")
 
         self.logLength = logLength #should be made longer for more complex problems
+        
     
     def _generateResponse(self, contents):
         pass #Each specific model has their own response generation method, so this will be overridden
@@ -34,18 +36,27 @@ class Tutor:
         return
 
     def _loadPrompt(self, filename): #I am doing this open file, replace QnA routine a lot, so this makes it easier
-        with open(filename, "r") as file:
+        #build directory
+        filepath = Path(__file__).parent / "Prompts" / filename
+        
+        with open(filepath, "r") as file:
             prompt = file.read()
+
         prompt = prompt.replace("[question]", self.currentQuestion)
         prompt = prompt.replace("[answer]", self.currentAnswer)
         return prompt
+
+    def _loadImage(self, imagePath):
+        with open(imagePath, "rb") as f:
+            image = f.read()
+        return image
     
     def _addHistory(self, modelOutput, userInput):
         pair = (modelOutput, userInput) #ModelOutput-UserInput pairs are stored as tuples
         self._chatHistory.append(pair)
     
     def _summarizeHistory(self, chatHistory):
-        contents = self._loadPrompt("IteratED_Github/IteratED_AI/Prompts/summaryPrompt.txt")
+        contents = self._loadPrompt("summaryPrompt.txt")
 
         contents += "Chat Log: " + self._createChatLog(self.logLength) #the number here is how many pairs to include, it can be changed later but less means less token usage
         contents += "Synopsis: " + (self.lastSummary or "")
@@ -106,8 +117,8 @@ class Tutor:
 import google.generativeai as genai
 from google.generativeai import types    
 class TutorGemini(Tutor):
-    def __init__(self, key, question="", answer=""):
-        super().__init__(question, answer)
+    def __init__(self, key, **kwargs):
+        super().__init__(**kwargs)
 
         #initialize Gemini client
         genai.configure(api_key=key)
@@ -122,8 +133,8 @@ class TutorGemini(Tutor):
 import openai
 from openai import OpenAI   
 class TutorOpenAI(Tutor):
-    def __init__(self, key, question="", answer=""):
-        super().__init__(question, answer)
+    def __init__(self, key, **kwargs):
+        super().__init__(**kwargs)
         
         # Initialize OpenAI client
         openai.api_key = key
