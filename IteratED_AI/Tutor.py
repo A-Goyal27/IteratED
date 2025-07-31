@@ -1,4 +1,5 @@
 from pathlib import Path
+#the prompts folder must be in the same directory as the Tutor.py file
 
 class Tutor:
     def __init__(self, question="", answer="", verificationMode=False, logLength=2): #there will be a new tutor for each question
