@@ -20,3 +20,9 @@ while prompt.lower() != "quit":
   print(response)
   prompt = input("Enter your question (or type "quit" to exit): ")
 ```
+
+The question and answer can be changed by directly accessing the variables in the tutor object.
+
+We have plans to integrate image-based questions in the future.
+
+The tutor also supports "Verification Mode", for students who do not want the tutor and instead only want verification over whether their answer is correct or not.
