@@ -7,7 +7,9 @@ The AI tutor has a prototype, while the website is still in development. We plan
 The AI tutor requires an LLM API key. The LLM is then given internal prompts that guide its response and method. 
 
 Currently, the AI can only be used within Python. The AI currently supports OpenAI and Gemini API Keys. 
+
 To create an OpenAI AI tutor: ``` tutor = TutorOpenAI(API_KEY, initial_question, initial_answer) ```
+
 To create a Gemini AI tutor: ``` tutor = TutorGemini(API_KEY, initial_question, initial_answer) ```
 
 To start interacting with the tutor, use something similar to the following code:
